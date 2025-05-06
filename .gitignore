@@ -1,0 +1,7 @@
+node_modules
+upload
+/upload
+.env
+.env*
+.DS_STORE
+package-lock.json

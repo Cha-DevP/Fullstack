@@ -3,9 +3,17 @@ import dbExecute from '../db/dbContext.js';
 
 ///Arrow function
 export const getSellProducts = async (req, res) => {
+    let filter = '';
+
+    const {search} = req.query;
+    
     try {
+
+        if(search) {
+            filter = ` AND a.sell_id LIKE '%${search}%' `;
+        }
         
-        const sql = "SELECT a.id, b.name,c.username, a.selled_at FROM tbsell a JOIN tbproducts b ON a.product_id = b.id JOIN tbusers c ON a.user_id = c.id";
+        const sql = "SELECT a.id,a.sell_id, b.name,a.qty, b.sellPrice,c.username, a.selled_at FROM tbsell a JOIN tbproducts b ON a.product_id = b.id JOIN tbusers c ON a.user_id = c.id WHERE 1 "+ filter;
         const params = [];
 
         const data = await dbExecute(sql, params);
@@ -34,7 +42,7 @@ export const getSellProduct = async (req, res) => {
 
     try {
         
-        const sql = "SELECT a.id, b.name,c.username, a.selled_at FROM tbsell a JOIN tbproducts b ON a.product_id = b.id JOIN tbusers c ON a.user_id = c.id WHERE a.id=?";
+        const sql = "SELECT a.id,a.sell_id, b.name,a.qty, b.sellPrice,c.username, a.selled_at FROM tbsell a JOIN tbproducts b ON a.product_id = b.id JOIN tbusers c ON a.user_id = c.id WHERE a.id=?";
         const params = [id];
 
         const data = await dbExecute(sql, params);
@@ -55,17 +63,17 @@ export const getSellProduct = async (req, res) => {
 
 ///Arrow function
 export const createSellProduct = async(rq, rs) => {
-    const { product_id,qty } = rq.body;
+    const { sell_id, product_id,qty } = rq.body;
 
     //// Validate data or validation data
-    if(!product_id || !req?.id || !qty){
+    if(!product_id || !rq?.id || !qty){
         return res.status(422).json({statusCode: 422, message: "Parameter empty!" });
     }
 
     try {
 
-        const sql = "INSERT INTO tbsell(product_id, user_id,qty) VALUES(?,?,?)";
-        const params = [product_id, req?.id,qty];
+        const sql = "INSERT INTO tbsell(sell_id,product_id, user_id,qty) VALUES(?,?,?,?)";
+        const params = [sell_id, product_id, rq?.id,qty];
 
         const data = await dbExecute(sql, params);
 
@@ -117,14 +125,14 @@ export const updateSellProduct = async (rq, rs) => {
     const {id} = rq.params;
 
     //// Validate data or validation data
-    if(!product_id || !req?.id || !qty || !id){
+    if(!product_id || !rq?.id || !qty || !id){
         return res.status(422).json({statusCode: 422, message: "Parameter empty!" });
     }
 
     try {
         await dbExecute(
             'UPDATE tbsell SET product_id=?, user_id=?,qty=? WHERE id=?',
-            [product_id, req?.id, qty, id]
+            [product_id, rq?.id, qty, id]
         );
     
         if(!data){

@@ -2,9 +2,17 @@ import dbExecute from '../db/dbContext.js';
 
 ///Arrow function
 export const getProducts = async (req, res) => {
+    let filter = "";
+
+    const {search} = req.query;
+
     try {
         
-        const sql = "SELECT * FROM tbproducts";
+        if(search){
+             filter = ` AND (name LIKE '%${search}%' OR slug LIKE '%${search}%')`;
+        }
+           
+        const sql = "SELECT * FROM tbproducts WHERE 1 "+ filter;
         const params = [];
 
         const data = await dbExecute(sql, params);
@@ -54,7 +62,7 @@ export const getProduct = async (req, res) => {
 
 ///Arrow function
 export const createProduct = async(rq, rs) => {
-    const { name, description,slug,expired_at,qty,image } = rq.body;
+    const { name, description,slug,expired_at,qty,buyPrice,sellPrice,image } = rq.body;
 
     //// Validate data or validation data
     if(!name || !expired_at || !qty){
@@ -63,8 +71,8 @@ export const createProduct = async(rq, rs) => {
 
     try {
 
-        const sql = "INSERT INTO tbproducts(name, description,slug,expired_at,qty,image,created_by) VALUES(?,?,?,?,?,?,?)";
-        const params = [name, description,slug,expired_at,qty,image, req?.id];
+        const sql = "INSERT INTO tbproducts(name, description,slug,expired_at,qty,buyPrice,sellPrice,image,created_by) VALUES(?,?,?,?,?,?,?,?,?)";
+        const params = [name, description,slug,expired_at,qty, buyPrice,sellPrice,image, rq?.id];
 
         const data = await dbExecute(sql, params);
 
@@ -112,7 +120,7 @@ export const deleteProduct = async(request, response) => {
 }
 
 export const updateProduct = async (rq, rs) => {
-    const {name, description,slug,expired_at,qty,image} = rq.body;
+    const {name, description,slug,expired_at,buyPrice,sellPrice,qty,image} = rq.body;
     const {id} = rq.params;
 
     //// Validate data or validation data
@@ -121,9 +129,9 @@ export const updateProduct = async (rq, rs) => {
     }
 
     try {
-        await dbExecute(
-            'UPDATE tbproducts SET name=?, description=?,slug=?,expired_at=?,qty=?,image=?,created_by=? WHERE id=?',
-            [name, description,slug,expired_at,qty,image, req.id, id]
+        const data = await dbExecute(
+            'UPDATE tbproducts SET name=?, description=?,slug=?,expired_at=?,buyPrice=?,sellPrice=?,qty=?,image=?,created_by=? WHERE id=?',
+            [name, description,slug,expired_at,buyPrice,sellPrice,qty,image, rq.id, id]
         );
     
         if(!data){
@@ -138,6 +146,7 @@ export const updateProduct = async (rq, rs) => {
         return rs.status(200).json({statusCode: 200, message:'Update success'});
 
     } catch (error) {
+        console.log({error})
         return rs.status(500).json({statusCode: 500, message:"Update data error"});
     }
 }
